@@ -4,6 +4,7 @@ import {
   getAll,
   getById,
   updateUser,
+  createNewUser,
 } from "../services/userService";
 import { STATUS } from "../enums/status";
 
@@ -59,4 +60,18 @@ const deleteUserById = async (req: Request, res: Response) => {
   }
 };
 
-export { getAllUsers, getUserById, updateUserById, deleteUserById };
+const createUser = async (req: Request, res: Response) => {
+  const newUser = req.body;
+
+  try {
+    const createdUser = await createNewUser(newUser);
+
+    return res.status(STATUS.CREATED).json({ createdUser: createdUser });
+  } catch (error: any) {
+    res
+      .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
+  }
+};
+
+export { getAllUsers, getUserById, updateUserById, deleteUserById, createUser };
