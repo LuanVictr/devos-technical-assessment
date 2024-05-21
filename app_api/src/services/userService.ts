@@ -14,3 +14,9 @@ export async function getAll(page: string, limit: string) {
     total,
   };
 }
+
+export async function getById(id: string) {
+  const user = await UserModel.findOne({ _id: id }).lean();
+
+  return user;
+}
