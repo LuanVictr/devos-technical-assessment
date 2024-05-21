@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  deleteUser,
   getAll,
   getById,
   updateUser,
@@ -46,4 +47,16 @@ const updateUserById = async (req: Request, res: Response) => {
   }
 };
 
-export { getAllUsers, getUserById, updateUserById };
+const deleteUserById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const deletedUser = await deleteUser(id);
+
+    return res.status(STATUS.OK).json({ deleted: deletedUser });
+  } catch (error: any) {
+    res.status(error.status).json({ message: error.message });
+  }
+};
+
+export { getAllUsers, getUserById, updateUserById, deleteUserById };
