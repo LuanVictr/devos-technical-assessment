@@ -32,3 +32,40 @@ export async function createNewUser(newUser: IUser) {
 
   return { message: "User created successfully", user: createdUser };
 }
+
+export async function updateUser(id: string, userUpdate: IUser) {
+  const user = await UserModel.findOne({ _id: id });
+
+  if (!user) {
+    throw {
+      status: STATUS.NOT_FOUND,
+      message: "User not found",
+    };
+  }
+
+  if (userUpdate.coordinates && userUpdate.address) {
+    throw {
+      status: STATUS.BAD_REQUEST,
+      message: "Please insert only coordinates OR only address",
+    };
+  }
+
+  userUpdate.name ? (user.name = userUpdate.name) : false;
+  userUpdate.email ? (user.email = userUpdate.email) : false;
+  if (userUpdate.address) {
+    const coordinates = await lib.getCoordinatesFromAddress(userUpdate.address);
+    user.address = userUpdate.address;
+    user.coordinates = [coordinates.lat, coordinates.lng];
+  }
+
+  if (userUpdate.coordinates) {
+    const address = await lib.getAddressFromCoordinates(userUpdate.coordinates);
+    user.coordinates = userUpdate.coordinates;
+    user.address = address;
+  }
+  
+  await user.save();
+
+  return user;
+}
+
