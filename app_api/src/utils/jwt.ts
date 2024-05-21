@@ -8,13 +8,13 @@ export function generateToken (payload: {_id: string}) {
   return jwt.sign({id: payload._id}, secret , { expiresIn: '7d' });
 }
 
-export function validateToken (tokenWithBearer:string) {
+export function validateToken(tokenWithBearer: string): string {
   const token = tokenWithBearer.split(" ")[1];
-  return jwt.verify(token, secret, (err, decoded) => {
-    if(err) {
-      console.error(err);
+  try {
+      const decoded: any = jwt.verify(token, secret);
+      return decoded.id;
+  } catch (error) {
+      console.error(error);
       throw new Error('Invalid token');
-    }
-    return decoded;
-  }); 
+  }
 }
