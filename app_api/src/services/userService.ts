@@ -20,3 +20,15 @@ export async function getById(id: string) {
 
   return user;
 }
+
+export async function createNewUser(newUser: IUser) {
+  if (!newUser) {
+    throw {
+      status: STATUS.BAD_REQUEST,
+      message: "User info is missing on request body",
+    };
+  }
+  const createdUser = await UserModel.create(newUser);
+
+  return { message: "User created successfully", user: createdUser };
+}
