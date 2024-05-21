@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   getAll,
   getById,
+  updateUser,
 } from "../services/userService";
 import { STATUS } from "../enums/status";
 
@@ -30,4 +31,19 @@ const getUserById = async (req: Request, res: Response) => {
   return res.status(STATUS.OK).json(user);
 };
 
-export { getAllUsers, getUserById };
+const updateUserById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const update = req.body;
+
+  try {
+    const updatedUser = await updateUser(id, update);
+
+    return res.status(STATUS.UPDATED).json({ updatedUser: updatedUser });
+  } catch (error: any) {
+    res
+      .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
+  }
+};
+
+export { getAllUsers, getUserById, updateUserById };
