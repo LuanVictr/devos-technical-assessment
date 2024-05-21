@@ -69,3 +69,17 @@ export async function updateUser(id: string, userUpdate: IUser) {
   return user;
 }
 
+export async function deleteUser(id: string) {
+  const user = await UserModel.findOne({ _id: id });
+
+  if (!user) {
+    throw {
+      status: STATUS.NOT_FOUND,
+      message: "User not found",
+    };
+  }
+
+  await user.deleteOne();
+
+  return user;
+}
