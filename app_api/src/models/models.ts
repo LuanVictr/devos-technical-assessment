@@ -50,19 +50,34 @@ export class User extends Base {
 }
 
 @pre<Region>("save", async function (next) {
-  const region = this as Omit<any, keyof Region> & Region;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  if (!region._id) {
-    region._id = new ObjectId().toString();
+  try {
+    const region = this as Omit<any, keyof Region> & Region;
+    if (!region._id) {
+      region._id = new ObjectId().toString();
+    }
+
+    if(!region.isModified("name")) {
+      throw new Error("Name field is required");
+    }
+
+    if (region.isNew) {
+      const user = await UserModel.findOne({ _id: region.user });
+      user.regions.push(region._id);
+      await user.save({ session: region.$session() });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    next(region.validateSync());
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
   }
-
-  if (region.isNew) {
-    const user = await UserModel.findOne({ _id: region.user });
-    user.regions.push(region._id);
-    await user.save({ session: region.$session() });
-  }
-
-  next(region.validateSync());
 })
 @modelOptions({ schemaOptions: { validateBeforeSave: false } })
 export class Region extends Base {
