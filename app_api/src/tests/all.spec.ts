@@ -74,7 +74,7 @@ describe('Models', () => {
   });
 
   it('should return a list of users', async () => {
-    const response = supertest(server).get(`/user?page=1&limit=10`);
+    const response = await supertest(server).get(`/user?page=1&limit=10`);
 
     expect(response).to.have.property('status', 200);
   });
@@ -95,8 +95,6 @@ describe('Models', () => {
         email: newUserEmail,
         address: newUserAddress,
       });
-
-      console.log(response.body);
 
       const responseBody = response.body.createdUser;
 
