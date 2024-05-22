@@ -301,5 +301,43 @@ describe("Models", () => {
         );
       });
     });
+
+    describe("/DELETE /user/id tests", () => {
+      let user;
+
+      beforeEach(async () => {
+        const oldUserName = faker.person.firstName();
+        const oldUserEmail = faker.internet.email();
+        const oldUserAddress = faker.location.streetAddress({
+          useFullAddress: true,
+        });
+
+        user = await supertest(server).post("/user").send({
+          name: oldUserName,
+          email: oldUserEmail,
+          address: oldUserAddress,
+        });
+      });
+
+      it("should delete a user successfully", async () => {
+        const userFound = await supertest(server).get(`/user/${user.body.createdUser.user._id}`);
+
+        expect(userFound).to.have.property('status', 200);
+
+        const userDeleted = await supertest(server).delete(`/user/${user.body.createdUser.user._id}`);
+
+        expect(userDeleted).to.have.property('status', 200);
+        expect(userDeleted.body.deleted).to.have.property('name', user.body.createdUser.user.name);
+        expect(await supertest(server).get(`/user/${user.body.createdUser.user._id}`)).to.have.property('status', 404);
+
+      });
+
+      it("should return an error if the user to delete does not exist", async () => {
+        const response = await supertest(server).delete(`/user/123123321`);
+
+        expect(response).to.have.property("status", 404);
+        expect(response.body).to.have.property("message", "User not found");
+      });
+    });
   });
 });
