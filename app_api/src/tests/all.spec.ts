@@ -136,23 +136,27 @@ describe("Models", () => {
       });
 
       it("should return an error in case of no body being provided", async () => {
-
         const response = await supertest(server).post("/user");
 
         const responseBody = response.body;
 
         expect(response).to.have.property("status", 422);
-        expect(responseBody).to.have.property("message", `\"name\" is required`);
+        expect(responseBody).to.have.property(
+          "message",
+          `\"name\" is required`
+        );
       });
 
       it("should return an error in case of coordinates and address are both provided", async () => {
-
         const newUserName = faker.person.firstName();
         const newUserEmail = faker.internet.email();
         const newUserAddress = faker.location.streetAddress({
           useFullAddress: true,
         });
-        const coordinates = [faker.location.latitude(), faker.location.longitude()];
+        const coordinates = [
+          faker.location.latitude(),
+          faker.location.longitude(),
+        ];
 
         const response = await supertest(server).post("/user").send({
           name: newUserName,
@@ -164,11 +168,13 @@ describe("Models", () => {
         const responseBody = response.body;
 
         expect(response).to.have.property("status", 500);
-        expect(responseBody).to.have.property("message", "Please insert only coordinates OR only address");
+        expect(responseBody).to.have.property(
+          "message",
+          "Please insert only coordinates OR only address"
+        );
       });
 
       it("should return an error if neither coordinates nor an address is provided.", async () => {
-
         const newUserName = faker.person.firstName();
         const newUserEmail = faker.internet.email();
 
@@ -180,32 +186,119 @@ describe("Models", () => {
         const responseBody = response.body;
 
         expect(response).to.have.property("status", 400);
-        expect(responseBody).to.have.property("message", "User need coordinates or address to be created");
+        expect(responseBody).to.have.property(
+          "message",
+          "User need coordinates or address to be created"
+        );
       });
     });
 
     describe("/PUT /user tests", () => {
-      it("should update username from user", async () => {
+      let user;
+
+      beforeEach(async () => {
         const oldUserName = faker.person.firstName();
         const oldUserEmail = faker.internet.email();
         const oldUserAddress = faker.location.streetAddress({
           useFullAddress: true,
         });
 
-        const createdUser = await supertest(server).post("/user").send({
+        user = await supertest(server).post("/user").send({
           name: oldUserName,
           email: oldUserEmail,
           address: oldUserAddress,
         });
-
+      });
+      it("should update username from user", async () => {
         const newUserName = faker.person.firstName();
 
-        const response = await supertest(server).put(`/user/${createdUser.body.createdUser.user._id}`).send({
-          name: newUserName,
-        })
+        const response = await supertest(server)
+          .put(`/user/${user.body.createdUser.user._id}`)
+          .send({
+            name: newUserName,
+          });
 
         expect(response).to.have.property("status", 201);
         expect(response.body.updatedUser).to.have.property("name", newUserName);
+      });
+
+      it("should update email from user", async () => {
+        const newUserEmail = faker.internet.email();
+
+        const response = await supertest(server)
+          .put(`/user/${user.body.createdUser.user._id}`)
+          .send({
+            email: newUserEmail,
+          });
+
+        expect(response).to.have.property("status", 201);
+        expect(response.body.updatedUser).to.have.property(
+          "email",
+          newUserEmail
+        );
+      });
+
+      it("should update address from user", async () => {
+        const newUserAddress = faker.location.streetAddress({
+          useFullAddress: true,
+        });
+
+        const response = await supertest(server)
+          .put(`/user/${user.body.createdUser.user._id}`)
+          .send({
+            address: newUserAddress,
+          });
+
+        expect(response).to.have.property("status", 201);
+        expect(response.body.updatedUser).to.have.property(
+          "address",
+          newUserAddress
+        );
+      });
+
+      it("should update coordinates from user", async () => {
+        const coordinates = [
+          faker.location.latitude(),
+          faker.location.longitude(),
+        ];
+
+        const response = await supertest(server)
+          .put(`/user/${user.body.createdUser.user._id}`)
+          .send({
+            coordinates: coordinates,
+          });
+
+        expect(response).to.have.property("status", 201);
+        expect(response.body.updatedUser.coordinates).to.be.deep.equal(
+          coordinates
+        );
+      });
+
+      it("should return an error if both coordinates and address are provided", async () => {
+        const newUserName = faker.person.firstName();
+        const newUserEmail = faker.internet.email();
+        const newUserAddress = faker.location.streetAddress({
+          useFullAddress: true,
+        });
+        const coordinates = [
+          faker.location.latitude(),
+          faker.location.longitude(),
+        ];
+
+        const response = await supertest(server)
+          .put(`/user/${user.body.createdUser.user._id}`)
+          .send({
+            name: newUserName,
+            email: newUserEmail,
+            address: newUserAddress,
+            coordinates: coordinates,
+          });
+
+        expect(response).to.have.property("status", 400);
+        expect(response.body).to.have.property(
+          "message",
+          "Please insert only coordinates OR only address"
+        );
       });
     });
   });
