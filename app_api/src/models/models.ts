@@ -12,6 +12,7 @@ import {
 import lib from "../services/lib";
 
 import ObjectId = mongoose.Types.ObjectId;
+import { IRegion } from "../interfaces/IRegion";
 
 class Base extends TimeStamps {
   @Prop({ required: true, default: () => new ObjectId().toString() })
@@ -59,7 +60,7 @@ export class User extends Base {
       region._id = new ObjectId().toString();
     }
 
-    if(!region.isModified("name")) {
+    if (!region.isModified("name")) {
       throw new Error("Name field is required");
     }
 
@@ -87,9 +88,17 @@ export class Region extends Base {
   @Prop({ required: true })
   name!: string;
 
+  @Prop({ required: true })
+  region!: {
+    type: string;
+    coordinates: [number, number][][];
+  };
+
   @Prop({ ref: () => User, required: true, type: () => String })
   user: Ref<User>;
 }
 
 export const UserModel = getModelForClass(User);
 export const RegionModel = getModelForClass(Region);
+
+// create the coordinate prop to save coordinates on regions
