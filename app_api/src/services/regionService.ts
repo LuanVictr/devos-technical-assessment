@@ -10,8 +10,26 @@ export async function createNewRegion(newRegion: IRegion) {
     };
   }
 
-  console.log(newRegion)
   const createdRegion = await RegionModel.create(newRegion);
 
   return { message: "Region created successfully", newRegion: createdRegion };
+}
+
+export async function getAllRegionsWithPoint(lat:string, lng:string) {
+
+  const regionFound = await RegionModel.find()
+  
+}
+
+export async function getRegionByIdService(id:string) {
+  const regionFound = await RegionModel.findOne({_id: id});
+
+  if (!regionFound) {
+    throw {
+      status: STATUS.NOT_FOUND,
+      message: "Region not found",
+    };
+  }
+
+  return regionFound;
 }
