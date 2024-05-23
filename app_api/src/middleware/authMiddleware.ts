@@ -9,7 +9,7 @@ function authMiddleware(req, res, next) {
 
   try {
     const decoded = validateToken(token);
-    if(!req.body.user) {
+    if(req.method !== 'PUT') {
       req.body.user = decoded;
     }
     next();
