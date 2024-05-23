@@ -42,6 +42,13 @@ export async function updateRegion(id: string, regionUpdate: IRegion) {
     };
   }
 
+  if(Object.keys(regionUpdate).length === 0) {
+    throw {
+      status: STATUS.BAD_REQUEST,
+      message: "To update a region you need to provide a body",
+    }
+  }
+
   if (!regionUpdate.user) {
     throw {
       status: STATUS.INTERNAL_SERVER_ERROR,

@@ -28,6 +28,13 @@ export async function createNewUser(newUser: IUser) {
       message: "User info is missing on request body",
     };
   }
+
+  if (!newUser.address && !newUser.coordinates) {
+    throw {
+      status: STATUS.BAD_REQUEST,
+      message: "User need coordinates or address to be created",
+    };
+  };
   const createdUser = await UserModel.create(newUser);
 
   return { message: "User created successfully", user: createdUser };
@@ -41,6 +48,13 @@ export async function updateUser(id: string, userUpdate: IUser) {
       status: STATUS.NOT_FOUND,
       message: "User not found",
     };
+  }
+
+  if(Object.keys(userUpdate).length === 0) {
+    throw {
+      status: STATUS.BAD_REQUEST,
+      message: "To update a user you need to provide a body",
+    }
   }
 
   if (userUpdate.coordinates && userUpdate.address) {
