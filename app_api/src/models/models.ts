@@ -59,12 +59,11 @@ export class User extends Base {
     if (!region._id) {
       region._id = new ObjectId().toString();
     }
-
-    if (!region.isModified("name")) {
-      throw new Error("Name field is required");
-    }
-
+    
     if (region.isNew) {
+      if (!region.isModified("name")) {
+        throw new Error("Name field is required");
+      }
       const user = await UserModel.findOne({ _id: region.user });
       user.regions.push(region._id);
       await user.save({ session: region.$session() });
@@ -86,10 +85,10 @@ export class Region extends Base {
   _id: string;
 
   @Prop({ required: true })
-  name!: string;
+  name: string;
 
   @Prop({ required: true })
-  region!: {
+  region: {
     type: string;
     coordinates: [number, number][][];
   };
