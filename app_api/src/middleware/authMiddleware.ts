@@ -9,7 +9,9 @@ function authMiddleware(req, res, next) {
 
   try {
     const decoded = validateToken(token);
-    req.body.user = decoded;
+    if(!req.body.user) {
+      req.body.user = decoded;
+    }
     next();
   } catch (error: any) {
     return res.status(403).json({ message: "Invalid token" });
