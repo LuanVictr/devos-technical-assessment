@@ -13,6 +13,7 @@ import server from "../server";
 
 describe("Models", () => {
   let user;
+  let region;
   let session;
   let geoLibStub: Partial<typeof GeoLib> = {};
 
@@ -32,6 +33,23 @@ describe("Models", () => {
       name: faker.person.firstName(),
       email: faker.internet.email(),
       address: faker.location.streetAddress({ useFullAddress: true }),
+    });
+
+    region = await RegionModel.create({
+      user: user._id,
+      name: faker.person.fullName(),
+      region: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+          ],
+        ],
+      },
     });
   });
 
@@ -59,6 +77,18 @@ describe("Models", () => {
       const regionData: Omit<Region, "_id"> = {
         user: user._id,
         name: faker.person.fullName(),
+        region: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+            ],
+          ],
+        },
       };
 
       const [region] = await RegionModel.create([regionData]);
@@ -114,7 +144,7 @@ describe("Models", () => {
       });
     });
 
-    describe("/POST /user tests", () => {
+    describe("POST /user tests", () => {
       it("should create a new user", async () => {
         const newUserName = faker.person.firstName();
         const newUserEmail = faker.internet.email();
@@ -193,7 +223,7 @@ describe("Models", () => {
       });
     });
 
-    describe("/PUT /user tests", () => {
+    describe("PUT /user tests", () => {
       let user;
 
       beforeEach(async () => {
@@ -302,7 +332,7 @@ describe("Models", () => {
       });
     });
 
-    describe("/DELETE /user/id tests", () => {
+    describe("DELETE /user/id tests", () => {
       let user;
 
       beforeEach(async () => {
@@ -350,15 +380,16 @@ describe("Models", () => {
   });
 
   describe("Region tests", () => {
-    describe("Create region tests", () => {
-      let token;
-      before(async () => {
-        const response = await supertest(server).post("/auth").send({
-          name: user.name,
-          email: user.email,
-        });
-        token = response.body.token;
+    let token;
+    before(async () => {
+      const response = await supertest(server).post("/auth").send({
+        name: user.name,
+        email: user.email,
       });
+      console.log("token response -->", response);
+      token = response.body.token;
+    });
+    describe("POST /region tests", () => {
       it("should create a new region", async () => {
         const newRegionName = faker.location.country();
         const newRegionUser = user._id;
@@ -384,38 +415,38 @@ describe("Models", () => {
           });
 
         expect(response).to.have.property("status", 201);
-        expect(response.body.createdRegion).to.have.property('message', "Region created successfully");
-        expect(response.body.createdRegion).to.have.property('newRegion');
-        expect(response.body.createdRegion.newRegion).to.have.property('name', newRegionName);
-        expect(response.body.createdRegion.newRegion).to.have.property('user', user._id);
+        expect(response.body.createdRegion).to.have.property(
+          "message",
+          "Region created successfully"
+        );
+        expect(response.body.createdRegion).to.have.property("newRegion");
+        expect(response.body.createdRegion.newRegion).to.have.property(
+          "name",
+          newRegionName
+        );
+        expect(response.body.createdRegion.newRegion).to.have.property(
+          "user",
+          user._id
+        );
       });
+    });
 
-      // it("should create a new region", async () => {
-      //   const newRegionName = faker.location.country();
-      //   const newRegionUser = user._id;
-      //   const newRegionInfo = {
-      //     type: "Polygon",
-      //     coordinates: [
-      //       [
-      //         [faker.location.longitude(), faker.location.latitude()],
-      //         [faker.location.longitude(), faker.location.latitude()],
-      //         [faker.location.longitude(), faker.location.latitude()],
-      //         [faker.location.longitude(), faker.location.latitude()],
-      //         [faker.location.longitude(), faker.location.latitude()],
-      //       ],
-      //     ],
-      //   };
+    describe("GET region tests", () => {
+      it("should get a region by id", async () => {
+        const response = await supertest(server)
+          .get(`/region/${region._id}`)
+          .set("Authorization", `Bearer ${token}`);
 
-      //   const response = await supertest(server)
-      //     .post("/region")
-      //     .set("Authorization", `Bearer ${token}`)
-      //     .send({
-      //       name: newRegionName,
-      //       region: newRegionInfo,
-      //     });
+        const regionFound = response.body;
 
-      //   expect(response).to.have.property("status", 201);
-      // });
+        expect(regionFound).to.have.property("name", region.name);
+        expect(regionFound).to.have.property("region");
+        expect(regionFound).to.have.property("user", region.user);
+        expect(regionFound.region).to.have.property("type", region.region.type);
+        expect(regionFound.region.coordinates).to.be.deep.equal(
+          region.region.coordinates
+        );
+      });
     });
   });
 });
