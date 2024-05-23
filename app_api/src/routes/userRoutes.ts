@@ -9,9 +9,9 @@ router.get("/user", userQueryValidation.userQuery, getAllUsers);
 
 router.get("/user/:id", getUserById);
 
-router.put("/user/:id", updateUserById );
+router.put("/user/:id", userValidation.update, updateUserById );
 
-router.post("/user", userValidation.user, createUser);
+router.post("/user", userValidation.save, createUser);
 
 router.delete("/user/:id", deleteUserById);
 

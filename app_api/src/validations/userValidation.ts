@@ -12,7 +12,19 @@ const userSchema = {
   regions: Joi.array().items(Joi.any()),
 };
 
-const user = celebrate(
+const userUpdateSchema = {
+  id: Joi.number(),
+  name: Joi.string(),
+  email: Joi.string().email(),
+  address: Joi.string(),
+  coordinates: Joi.array().items(
+    Joi.number().required(),
+    Joi.number().required()
+  ),
+  regions: Joi.array().items(Joi.any()),
+};
+
+const save = celebrate(
   {
     body: Joi.object({
       ...userSchema,
@@ -23,4 +35,15 @@ const user = celebrate(
   }
 );
 
-export default { user };
+const update = celebrate(
+  {
+    body: Joi.object({
+      ...userUpdateSchema,
+    }),
+  },
+  {
+    abortEarly: true,
+  }
+);
+
+export default { save, update };
