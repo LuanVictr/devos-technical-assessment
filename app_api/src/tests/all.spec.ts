@@ -320,16 +320,24 @@ describe("Models", () => {
       });
 
       it("should delete a user successfully", async () => {
-        const userFound = await supertest(server).get(`/user/${user.body.createdUser.user._id}`);
+        const userFound = await supertest(server).get(
+          `/user/${user.body.createdUser.user._id}`
+        );
 
-        expect(userFound).to.have.property('status', 200);
+        expect(userFound).to.have.property("status", 200);
 
-        const userDeleted = await supertest(server).delete(`/user/${user.body.createdUser.user._id}`);
+        const userDeleted = await supertest(server).delete(
+          `/user/${user.body.createdUser.user._id}`
+        );
 
-        expect(userDeleted).to.have.property('status', 200);
-        expect(userDeleted.body.deleted).to.have.property('name', user.body.createdUser.user.name);
-        expect(await supertest(server).get(`/user/${user.body.createdUser.user._id}`)).to.have.property('status', 404);
-
+        expect(userDeleted).to.have.property("status", 200);
+        expect(userDeleted.body.deleted).to.have.property(
+          "name",
+          user.body.createdUser.user.name
+        );
+        expect(
+          await supertest(server).get(`/user/${user.body.createdUser.user._id}`)
+        ).to.have.property("status", 404);
       });
 
       it("should return an error if the user to delete does not exist", async () => {
@@ -338,6 +346,76 @@ describe("Models", () => {
         expect(response).to.have.property("status", 404);
         expect(response.body).to.have.property("message", "User not found");
       });
+    });
+  });
+
+  describe("Region tests", () => {
+    describe("Create region tests", () => {
+      let token;
+      before(async () => {
+        const response = await supertest(server).post("/auth").send({
+          name: user.name,
+          email: user.email,
+        });
+        token = response.body.token;
+      });
+      it("should create a new region", async () => {
+        const newRegionName = faker.location.country();
+        const newRegionUser = user._id;
+        const newRegionInfo = {
+          type: "Polygon",
+          coordinates: [
+            [
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+              [faker.location.longitude(), faker.location.latitude()],
+            ],
+          ],
+        };
+
+        const response = await supertest(server)
+          .post("/region")
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+            name: newRegionName,
+            region: newRegionInfo,
+          });
+
+        expect(response).to.have.property("status", 201);
+        expect(response.body.createdRegion).to.have.property('message', "Region created successfully");
+        expect(response.body.createdRegion).to.have.property('newRegion');
+        expect(response.body.createdRegion.newRegion).to.have.property('name', newRegionName);
+        expect(response.body.createdRegion.newRegion).to.have.property('user', user._id);
+      });
+
+      // it("should create a new region", async () => {
+      //   const newRegionName = faker.location.country();
+      //   const newRegionUser = user._id;
+      //   const newRegionInfo = {
+      //     type: "Polygon",
+      //     coordinates: [
+      //       [
+      //         [faker.location.longitude(), faker.location.latitude()],
+      //         [faker.location.longitude(), faker.location.latitude()],
+      //         [faker.location.longitude(), faker.location.latitude()],
+      //         [faker.location.longitude(), faker.location.latitude()],
+      //         [faker.location.longitude(), faker.location.latitude()],
+      //       ],
+      //     ],
+      //   };
+
+      //   const response = await supertest(server)
+      //     .post("/region")
+      //     .set("Authorization", `Bearer ${token}`)
+      //     .send({
+      //       name: newRegionName,
+      //       region: newRegionInfo,
+      //     });
+
+      //   expect(response).to.have.property("status", 201);
+      // });
     });
   });
 });
