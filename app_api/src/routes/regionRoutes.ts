@@ -6,7 +6,7 @@ import regionValidation from "../validations/regionValidation";
 const router = Router();
 
 router.get("/region/:id", authMiddleware, getRegionById);
-router.post("/region", regionValidation.region , authMiddleware, createRegion );
-router.put("/region/:id", authMiddleware, updateRegionById);
+router.post("/region", regionValidation.save , authMiddleware, createRegion );
+router.put("/region/:id", regionValidation.update, authMiddleware, updateRegionById);
 
 export default router;

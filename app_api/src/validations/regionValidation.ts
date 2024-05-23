@@ -18,7 +18,26 @@ const regionSchema = {
   }).required(),
 };
 
-const region = celebrate(
+const regionUpdateSchema = {
+  name: Joi.string(),
+  user: Joi.string(),
+  region: Joi.object({
+    type: Joi.string().required(),
+    coordinates: Joi.array()
+      .items(
+        Joi.array()
+          .items(
+            Joi.array()
+              .items(Joi.number().required(), Joi.number().required())
+              .required()
+          )
+          .required()
+      )
+      .required(),
+  }),
+};
+
+const save = celebrate(
   {
     body: Joi.object({
       ...regionSchema,
@@ -29,4 +48,15 @@ const region = celebrate(
   }
 );
 
-export default { region };
+const update = celebrate(
+  {
+    body: Joi.object({
+      ...regionUpdateSchema,
+    }),
+  },
+  {
+    abortEarly: true,
+  }
+);
+
+export default { save, update };
