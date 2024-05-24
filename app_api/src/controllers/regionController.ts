@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { STATUS } from "../enums/status";
 import {
   createNewRegion,
+  deleteRegionService,
   getRegionByIdService,
   updateRegion,
 } from "../services/regionService";
@@ -38,17 +39,29 @@ const updateRegionById = async (req: Request, res: Response) => {
   const { id } = req.params;
   const update = req.body;
 
-  console.log('update', update)
-
   try {
     const updatedRegion = await updateRegion(id, update);
 
     return res.status(STATUS.UPDATED).json({ updatedRegion: updatedRegion });
   } catch (error: any) {
-    res
+    return res
       .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
       .json({ message: error.message });
   }
 };
 
-export { createRegion, getRegionById, updateRegionById };
+const deleteRegion = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const deletedRegion = await deleteRegionService(id);
+
+    return res.status(STATUS.OK).json({ deletedRegion: deletedRegion });
+  } catch (error) {
+    return res
+      .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
+  }
+};
+
+export { createRegion, getRegionById, updateRegionById, deleteRegion };
