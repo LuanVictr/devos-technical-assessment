@@ -30,8 +30,7 @@ const regionUpdateSchema = {
             .required()
         )
         .required()
-    )
-    .required(),
+    ),
 };
 
 const save = celebrate(
