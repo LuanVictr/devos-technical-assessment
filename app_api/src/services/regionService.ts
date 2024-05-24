@@ -83,3 +83,19 @@ export async function updateRegion(id: string, regionUpdate: IRegion) {
 
   return region;
 }
+
+export async function deleteRegionService(id: string) {
+  const regionFound = await RegionModel.findOne({ _id: id });
+
+  if (!regionFound) {
+    throw {
+      status: STATUS.NOT_FOUND,
+      message: "Region does not exist",
+    };
+  }
+
+  await regionFound.deleteOne();
+
+  return regionFound;
+
+}
