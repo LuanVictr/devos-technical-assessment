@@ -12,6 +12,9 @@ function authMiddleware(req, res, next) {
     if(req.method !== 'PUT') {
       req.body.user = decoded;
     }
+    if(req.method === 'PUT') {
+      req.body.user ? req.body.user : req.body.user = decoded;  
+    }
     next();
   } catch (error: any) {
     return res.status(403).json({ message: "Invalid token" });
