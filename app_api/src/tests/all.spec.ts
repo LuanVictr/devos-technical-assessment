@@ -386,7 +386,6 @@ describe("Models", () => {
         name: user.name,
         email: user.email,
       });
-      console.log("token response -->", response);
       token = response.body.token;
     });
     describe("POST /region tests", () => {
@@ -447,6 +446,184 @@ describe("Models", () => {
           region.region.coordinates
         );
       });
+    });
+
+    describe("PUT /region tests", () => {
+      let region;
+
+      beforeEach(async () => {
+        region = await supertest(server)
+          .post("/region")
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+            name: faker.person.fullName(),
+            region: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                ],
+              ],
+            },
+          });
+      });
+
+      it("should update name from region", async () => {
+        const newRegionName = faker.location.country();
+
+        const response = await supertest(server)
+          .put(`/region/${region.body.createdRegion.newRegion._id}`)
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+            name: newRegionName,
+          });
+
+        expect(response).to.have.property("status", 201);
+        expect(response.body.updatedRegion).to.have.property(
+          "name",
+          newRegionName
+        );
+      });
+
+      it("should update user from region", async () => {
+        const userToRecieveRegion = await UserModel.create({
+          name: faker.person.firstName(),
+          email: faker.internet.email(),
+          address: faker.location.streetAddress({ useFullAddress: true }),
+        });
+
+        const userWithRegion = await UserModel.findOne({ _id: user._id });
+        const hasRegion = userWithRegion.regions.includes(
+          region.body.createdRegion.newRegion._id
+        );
+
+        expect(hasRegion).to.be.true;
+
+        const response = await supertest(server)
+          .put(`/region/${region.body.createdRegion.newRegion._id}`)
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+            user: userToRecieveRegion._id,
+          });
+
+        expect(response).to.have.property("status", 201);
+        expect(response.body.updatedRegion).to.have.property(
+          "user",
+          userToRecieveRegion._id
+        );
+        expect(
+          (await UserModel.findOne({ _id: user._id })).regions.includes(
+            region.body.createdRegion.newRegion._id
+          )
+        ).to.be.false;
+      });
+
+      it("should update coordinates from region", async () => {
+        const coordinates = [
+          [
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+            [faker.location.longitude(), faker.location.latitude()],
+          ],
+        ];
+
+        const response = await supertest(server)
+          .put(`/region/${region.body.createdRegion.newRegion._id}`)
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+            coordinates: coordinates,
+          });
+
+        expect(response).to.have.property("status", 201);
+        expect(response.body.updatedRegion.region.coordinates).to.be.deep.equal(
+          coordinates
+        );
+      });
+
+      it("should return an error if body is on wrong format", async () => {
+        const response = await supertest(server)
+          .put(`/region/${region.body.createdRegion.newRegion._id}`)
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+            name: faker.person.fullName(),
+            region: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                ],
+              ],
+            },
+          });
+
+        expect(response).to.have.property("status", 422);
+      });
+    });
+
+    describe("DELETE /region tests", () => {
+      let region;
+
+      beforeEach(async () => {
+        region = await supertest(server)
+          .post("/region")
+          .set("Authorization", `Bearer ${token}`)
+          .send({
+            name: faker.person.fullName(),
+            region: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                  [faker.location.longitude(), faker.location.latitude()],
+                ],
+              ],
+            },
+          });
+      });
+
+      it("should delete a user successfully", async () => {
+        const regionFound = await supertest(server)
+          .get(`/region/${region.body.createdRegion.newRegion._id}`)
+          .set("Authorization", `Bearer ${token}`);
+
+        expect(regionFound).to.have.property("status", 200);
+
+        const regionDeleted = await supertest(server)
+          .delete(`/region/${regionFound.body._id}`)
+          .set("Authorization", `Bearer ${token}`);
+
+        expect(regionDeleted).to.have.property("status", 200);
+        expect(regionDeleted.body.deletedRegion).to.have.property(
+          "name",
+          region.body.createdRegion.region.name
+        );
+        expect(
+          await supertest(server)
+            .get(`/region/${region._id}`)
+            .set("Authorization", `Bearer ${token}`)
+        ).to.have.property("status", 404);
+      });
+
+      it("should return an error if the region to delete does not exist", async () => {
+        const response = await supertest(server).delete(`/region/123123321`).set("Authorization", `Bearer ${token}`);
+
+        expect(response).to.have.property("status", 404);
+        expect(response.body).to.have.property("message", "Region does not exist");
+      });
+      10;
     });
   });
 });
