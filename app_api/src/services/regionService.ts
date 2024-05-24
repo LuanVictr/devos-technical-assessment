@@ -1,5 +1,6 @@
 import { STATUS } from "../enums/status";
 import { IRegion } from "../interfaces/IRegion";
+import { IRegionUpdate } from "../interfaces/IRegionUpdate";
 import { RegionModel, UserModel } from "../models/models";
 
 export async function createNewRegion(newRegion: IRegion) {
@@ -32,7 +33,7 @@ export async function getRegionByIdService(id: string) {
   return regionFound;
 }
 
-export async function updateRegion(id: string, regionUpdate: IRegion) {
+export async function updateRegion(id: string, regionUpdate: IRegionUpdate) {
   const region = await RegionModel.findOne({ _id: id });
 
   if (!region) {
@@ -42,11 +43,11 @@ export async function updateRegion(id: string, regionUpdate: IRegion) {
     };
   }
 
-  if(Object.keys(regionUpdate).length === 0) {
+  if (Object.keys(regionUpdate).length === 0) {
     throw {
       status: STATUS.BAD_REQUEST,
       message: "To update a region you need to provide a body",
-    }
+    };
   }
 
   if (!regionUpdate.user) {
@@ -58,11 +59,9 @@ export async function updateRegion(id: string, regionUpdate: IRegion) {
   }
 
   regionUpdate.name ? (region.name = regionUpdate.name) : false;
-  if (regionUpdate.region) {
-    regionUpdate.region.coordinates
-      ? (region.region.coordinates = regionUpdate.region.coordinates)
-      : false;
-  }
+  regionUpdate.coordinates
+    ? (region.region.coordinates = regionUpdate.coordinates)
+    : false;
 
   if (regionUpdate.user) {
     await UserModel.findOneAndUpdate(
@@ -97,5 +96,4 @@ export async function deleteRegionService(id: string) {
   await regionFound.deleteOne();
 
   return regionFound;
-
 }
