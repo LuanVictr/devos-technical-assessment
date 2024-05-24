@@ -3,6 +3,7 @@ import { STATUS } from "../enums/status";
 import {
   createNewRegion,
   deleteRegionService,
+  getAllRegionsWithPointService,
   getRegionByIdService,
   updateRegion,
 } from "../services/regionService";
@@ -16,6 +17,22 @@ const createRegion = async (req: Request, res: Response) => {
     return res.status(STATUS.CREATED).json({ createdRegion: createdRegion });
   } catch (error: any) {
     res
+      .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
+  }
+};
+
+const getRegionsWithPoint = async (req: Request, res: Response) => {
+  try {
+    const { lat, lng } = req.query;
+    const latNumber = parseFloat(lat.toString());
+    const lngNumber = parseFloat(lng.toString());
+
+    const regionsFound = await getAllRegionsWithPointService([latNumber, lngNumber]);
+
+    return res.status(STATUS.OK).json(regionsFound);
+  } catch (error) {
+    return res
       .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
       .json({ message: error.message });
   }
@@ -64,4 +81,4 @@ const deleteRegion = async (req: Request, res: Response) => {
   }
 };
 
-export { createRegion, getRegionById, updateRegionById, deleteRegion };
+export { createRegion, getRegionById, getRegionsWithPoint, updateRegionById, deleteRegion };
