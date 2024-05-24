@@ -2,6 +2,7 @@ import { STATUS } from "../enums/status";
 import { IRegion } from "../interfaces/IRegion";
 import { IRegionUpdate } from "../interfaces/IRegionUpdate";
 import { RegionModel, UserModel } from "../models/models";
+import { checkIfPointIsInside } from "../utils/pointChecker";
 
 export async function createNewRegion(newRegion: IRegion) {
   if (!newRegion.name || !newRegion.region.coordinates) {
@@ -16,8 +17,15 @@ export async function createNewRegion(newRegion: IRegion) {
   return { message: "Region created successfully", newRegion: createdRegion };
 }
 
-export async function getAllRegionsWithPoint(lat: string, lng: string) {
+export async function getAllRegionsWithPointService(point:[number, number]) {
   const regionFound = await RegionModel.find();
+  console.log('point ->', point);
+
+  const regionsWithPoint = regionFound.filter((region) => 
+  checkIfPointIsInside(point, region.region.coordinates)
+);
+
+return regionsWithPoint;
 }
 
 export async function getRegionByIdService(id: string) {
