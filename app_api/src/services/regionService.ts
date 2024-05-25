@@ -1,7 +1,9 @@
 import { STATUS } from "../enums/status";
 import { IRegion } from "../interfaces/IRegion";
 import { IRegionUpdate } from "../interfaces/IRegionUpdate";
-import { RegionModel, UserModel } from "../models/models";
+import { Region, RegionModel, UserModel } from "../models/models";
+import { CheckIfRegionHaveDistance } from "../utils/distanceChecker";
+import { validateToken } from "../utils/jwt";
 import { checkIfPointIsInside } from "../utils/pointChecker";
 
 export async function createNewRegion(newRegion: IRegion) {
@@ -17,15 +19,46 @@ export async function createNewRegion(newRegion: IRegion) {
   return { message: "Region created successfully", newRegion: createdRegion };
 }
 
-export async function getAllRegionsWithPointService(point:[number, number]) {
+export async function getAllRegionsWithPointService(point: [number, number]) {
   const regionFound = await RegionModel.find();
-  console.log('point ->', point);
 
-  const regionsWithPoint = regionFound.filter((region) => 
-  checkIfPointIsInside(point, region.region.coordinates)
-);
+  const regionsWithPoint = regionFound.filter((region) =>
+    checkIfPointIsInside(point, region.region.coordinates)
+  );
 
-return regionsWithPoint;
+  return regionsWithPoint;
+}
+
+export async function getRegionsWithADistance(
+  point: [number, number],
+  isFromUser: boolean,
+  token: string,
+  unit,
+  distance:number
+) {
+
+  const user = validateToken(token);
+  let regions = await RegionModel.find();
+
+  if (isFromUser) {
+    regions = await RegionModel.find({user: user});
+  }
+
+  const regionsWithDistance = regions.filter((region) => CheckIfRegionHaveDistance(
+    unit,
+    distance,
+    point,
+    region.region.coordinates,
+  ));
+
+  if (regionsWithDistance.length === 0) {
+    throw {
+      status: STATUS.NOT_FOUND,
+      message: 'No regions found'
+    }
+  }
+
+  return regionsWithDistance;
 }
 
 export async function getRegionByIdService(id: string) {
