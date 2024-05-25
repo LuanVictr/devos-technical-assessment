@@ -18,11 +18,14 @@ export function ValidateRegionQuery (lat, lng, fromUser, distance, unit ) {
     }
   }
 
-  if(unit !== "meters" && unit !== "kilometers") {
-    throw {
-      status: STATUS.BAD_REQUEST,
-      message: "unit should be exatcly 'meters' or 'kilometers'",
+  if(distance) {
+    if(unit !== "meters" && unit !== "kilometers") {
+      throw {
+        status: STATUS.BAD_REQUEST,
+        message: "unit should be exatcly 'meters' or 'kilometers'",
+      }
     }
   }
+
 }
 
