@@ -53,7 +53,7 @@ const getRegionsWithPoint = async (req: Request, res: Response) => {
       distanceNumber
     );
 
-    return res.status(STATUS.OK).json({ message: regionsFromDistance });
+    return res.status(STATUS.OK).json(regionsFromDistance);
   } catch (error) {
     return res
       .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
