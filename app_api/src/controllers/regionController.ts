@@ -5,8 +5,10 @@ import {
   deleteRegionService,
   getAllRegionsWithPointService,
   getRegionByIdService,
+  getRegionsWithADistance,
   updateRegion,
 } from "../services/regionService";
+import { ValidateRegionQuery } from "../validations/validateRegionQuery";
 
 const createRegion = async (req: Request, res: Response) => {
   const newRegion = req.body;
@@ -23,14 +25,35 @@ const createRegion = async (req: Request, res: Response) => {
 };
 
 const getRegionsWithPoint = async (req: Request, res: Response) => {
+  const { lat, lng, distance, fromUser, unit } = req.query;
   try {
-    const { lat, lng } = req.query;
+    ValidateRegionQuery(lat, lng, distance, fromUser, unit);
+
     const latNumber = parseFloat(lat.toString());
     const lngNumber = parseFloat(lng.toString());
+    const token = req.headers.authorization;
 
-    const regionsFound = await getAllRegionsWithPointService([latNumber, lngNumber]);
+    const fromUserBol = fromUser === "true";
 
-    return res.status(STATUS.OK).json(regionsFound);
+    if (!distance) {
+      const regionsFound = await getAllRegionsWithPointService([
+        latNumber,
+        lngNumber,
+      ]);
+
+      return res.status(STATUS.OK).json(regionsFound);
+    }
+    const distanceNumber = parseFloat(distance.toString());
+
+    const regionsFromDistance = await getRegionsWithADistance(
+      [latNumber, lngNumber],
+      fromUserBol,
+      token,
+      unit,
+      distanceNumber
+    );
+
+    return res.status(STATUS.OK).json({ message: regionsFromDistance });
   } catch (error) {
     return res
       .status(error.status ? error.status : STATUS.INTERNAL_SERVER_ERROR)
@@ -81,4 +104,10 @@ const deleteRegion = async (req: Request, res: Response) => {
   }
 };
 
-export { createRegion, getRegionById, getRegionsWithPoint, updateRegionById, deleteRegion };
+export {
+  createRegion,
+  getRegionById,
+  getRegionsWithPoint,
+  updateRegionById,
+  deleteRegion,
+};
