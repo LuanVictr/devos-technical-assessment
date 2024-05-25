@@ -15,6 +15,7 @@ describe("Models", () => {
   let user;
   let region;
   let session;
+  let controlledRegion;
   let geoLibStub: Partial<typeof GeoLib> = {};
 
   before(async () => {
@@ -37,7 +38,7 @@ describe("Models", () => {
 
     region = await RegionModel.create({
       user: user._id,
-      name: faker.person.fullName(),
+      name: faker.location.country(),
       region: {
         type: "Polygon",
         coordinates: [
@@ -51,9 +52,32 @@ describe("Models", () => {
         ],
       },
     });
+
+    controlledRegion = await RegionModel.create({
+      user: user._id,
+      name: "central park",
+      region: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [-73.98178100585938, 40.768020857734],
+            [-73.95832061767578, 40.80090536006155],
+            [-73.94962310791016, 40.81124086971714],
+            [-73.96781921386719, 40.82667403129942],
+            [-73.9794921875, 40.773565541152725],
+            [-73.98178100585938, 40.768020857734]
+          ]
+        ]
+      }
+    });
   });
 
-  after(() => {
+   // create central park if not exists and do testing of the last method, document and é isso
+
+  after(async () => {
+    await UserModel.deleteOne({_id: user._id});
+    await RegionModel.deleteOne({_id: region._id});
+    await RegionModel.deleteOne({_id: controlledRegion._id});
     sinon.restore();
     session.endSession();
   });
@@ -446,6 +470,77 @@ describe("Models", () => {
           region.region.coordinates
         );
       });
+
+      it("should return an error if region does not exists", async () => {
+        const response = await supertest(server)
+          .get(`/region/362131629831`)
+          .set("Authorization", `Bearer ${token}`);
+
+        const regionFound = response;
+
+        expect(regionFound).to.have.property("status", 404);
+        expect(regionFound.body).to.have.property(
+          "message",
+          "Region not found"
+        );
+      });
+
+      it("should return all regions that have a provided point", async () => {
+        const mockRegion = await RegionModel.create({
+          user: user._id,
+          name: faker.location.country(),
+          region: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [
+                  -40.36337744086629,
+                  -3.665467668665883
+                ],
+                [
+                  -40.36337744086629,
+                  -3.7025787359750666
+                ],
+                [
+                  -40.327369760237275,
+                  -3.7025787359750666
+                ],
+                [
+                  -40.327369760237275,
+                  -3.665467668665883
+                ],
+                [
+                  -40.36337744086629,
+                  -3.665467668665883
+                ]
+              ]
+            ],
+          },
+        });
+
+        const response = await supertest(server)
+          .get(`/region?lat=-40.345373600551785&lng=-3.684023202320475`)
+          .set("Authorization", `Bearer ${token}`);
+
+        expect(response).to.have.property("status", 200);
+      });
+
+      it("should return a region that have a provided distance from a provided point", async () => {
+
+        const response = await supertest(server)
+          .get(`/region?lat=-73.9767837524414&lng=40.77978539702517&distance=1000&unit=meters&fromUser=false`)
+          .set("Authorization", `Bearer ${token}`);
+
+          console.log('response -->', response.body);
+
+          const responseBody = response.body.regionsFromDistance
+
+        expect(response).to.have.property("status", 200);
+        expect(response.body[0]).to.have.property("name", controlledRegion.name);
+        expect(response.body[0]).to.have.property("user", user._id);
+        expect(response.body[0]).to.have.property("region");
+        expect(response.body[0].region.coordinates).to.be.deep.equal(controlledRegion.region.coordinates);
+      });
     });
 
     describe("PUT /region tests", () => {
@@ -594,7 +689,7 @@ describe("Models", () => {
           });
       });
 
-      it("should delete a user successfully", async () => {
+      it("should delete a region successfully", async () => {
         const regionFound = await supertest(server)
           .get(`/region/${region.body.createdRegion.newRegion._id}`)
           .set("Authorization", `Bearer ${token}`);
@@ -608,7 +703,7 @@ describe("Models", () => {
         expect(regionDeleted).to.have.property("status", 200);
         expect(regionDeleted.body.deletedRegion).to.have.property(
           "name",
-          region.body.createdRegion.region.name
+          region.body.createdRegion.newRegion.name
         );
         expect(
           await supertest(server)
@@ -618,10 +713,15 @@ describe("Models", () => {
       });
 
       it("should return an error if the region to delete does not exist", async () => {
-        const response = await supertest(server).delete(`/region/123123321`).set("Authorization", `Bearer ${token}`);
+        const response = await supertest(server)
+          .delete(`/region/123123321`)
+          .set("Authorization", `Bearer ${token}`);
 
         expect(response).to.have.property("status", 404);
-        expect(response.body).to.have.property("message", "Region does not exist");
+        expect(response.body).to.have.property(
+          "message",
+          "Region does not exist"
+        );
       });
       10;
     });
