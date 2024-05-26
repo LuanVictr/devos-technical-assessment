@@ -1,4 +1,4 @@
-# Teste ténico DevOs OzMap
+# Teste ténico DevOz OzMap
 
 ## Informações
 
